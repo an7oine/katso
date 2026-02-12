@@ -3,6 +3,7 @@
 class __getattr__:
 
   from importlib import import_module
+  import inspect
   from types import ModuleType
 
   import_module = staticmethod(import_module)
@@ -11,25 +12,27 @@ class __getattr__:
     def __getattr__(self, attr: str):
       return type(self)('.'.join((self, attr)))
 
-  class _module(ModuleType):
-    def __getattr__(self, attr: str):
-      try:
-        return super().__getattr__(attr)
-      except AttributeError:
-        global __getattr__
-        return __getattr__('.'.join((self.__name__, attr)))
+  def _forwardref_evaluate(self) -> bool:
+    frame = self.inspect.currentframe()
+    while frame is not None:
+      if (f_back := frame.f_back) is not None \
+      and f_back.f_code.co_qualname in (
+        'ForwardRef.evaluate',  # Python 3.14+
+        'ForwardRef._evaluate',  # Python 3.13-
+      ):
+        return True
+      elif frame.f_code.co_qualname == '<module>':
+        return False
+      frame = f_back
+    return False
+    # def _forwardref_evaluate -> bool
 
-  def __call__(self, attr: str):
+  def __call__(self, attr: str) -> str | ModuleType:
     if attr.startswith(__name__ + '.'):
       attr = attr[len(__name__) + 1:]
-    try:
-      module = self.import_module(attr)
-    except ModuleNotFoundError:
+    if not self._forwardref_evaluate():
       return self._str('.'.join((__name__, attr)))
-    else:
-      _module = self._module(module.__name__)
-      _module.__dict__.update(module.__dict__)
-      return _module
+    return self.import_module(attr)
     # def __call__
 
   # class __getattr__

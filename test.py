@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import importlib
+from inspect import get_annotations
 import sys
 from types import ModuleType
 from typing import ForwardRef, Optional, get_type_hints
@@ -23,21 +24,31 @@ class TestAB:
 
   @dataclass
   class A:
-    b: Optional[katso.__main__.B] = None
+    b: Optional[katso.test.TestAB.B] = None
 
   @dataclass
   class B:
-    a: Optional[katso.__main__.A] = None
+    a: Optional[katso.test.TestAB.A] = None
 
   def test(self):
-    assert get_type_hints(self.A) == {'b': Optional[ForwardRef('katso.__main__.B')]}
-    assert get_type_hints(self.B) == {'a': Optional[ForwardRef('katso.__main__.A')]}
+    assert get_annotations(self.A) == {
+      'b': Optional[ForwardRef('katso.test.TestAB.B')]
+    }
+    assert get_type_hints(self.A) == {
+      'b': Optional[self.B]
+    }
+    assert get_annotations(self.B) == {
+      'a': Optional[ForwardRef('katso.test.TestAB.A')]
+    }
+    assert get_type_hints(self.B) == {
+      'a': Optional[self.A]
+    }
     a = self.A(b=self.B())
     a.b.a = a
     assert repr(a) == 'TestAB.A(b=TestAB.B(a=...))'
     # def new
 
-  # class test_AB
+  # class TestAB
 
 
 class TestCD:
@@ -50,7 +61,7 @@ class TestCD:
       import katso
       @dataclass
       class C:
-        d: Optional[katso.__main__.d.D] = None
+        d: Optional[katso.d.D] = None
     '''.replace('\n      ', '\n'))
 
   @pytest.fixture
@@ -61,12 +72,16 @@ class TestCD:
       import katso
       @dataclass
       class D:
-        c: Optional[katso.__main__.c.C] = None
+        c: Optional[katso.c.C] = None
     '''.replace('\n      ', '\n'))
 
   def test(self, c: ModuleType, d: ModuleType):
-    assert get_type_hints(c.C) == {'d': Optional[ForwardRef('katso.__main__.d.D')]}
-    assert get_type_hints(d.D) == {'c': Optional[ForwardRef('katso.__main__.c.C')]}
+    assert get_type_hints(c.C) == {
+      'd': Optional[d.D]
+    }
+    assert get_type_hints(d.D) == {
+      'c': Optional[c.C]
+    }
     c = c.C(d=d.D())
     c.d.c = c
     assert repr(c) == 'C(d=D(c=...))'

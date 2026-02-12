@@ -10,7 +10,7 @@ dynamic = ["version"]
 license = {text = "MIT"}
 name = "katso"
 readme = "README.md"
-requires-python = ">= 3.8"
+requires-python = ">= 3.11"
 
 [project.urls]
 Repository = "https://github.com/an7oine/katso.git"
