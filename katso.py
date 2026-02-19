@@ -9,8 +9,18 @@ class __getattr__:
   import_module = staticmethod(import_module)
 
   class _str(str):
+    from typing import Union
+
     def __getattr__(self, attr: str):
       return type(self)('.'.join((self, attr)))
+
+    def __or__(self, other):
+      return self.Union[self, other]
+
+    def __ror__(self, other):
+      return self.Union[other, self]
+
+    # class _str
 
   def _forwardref_evaluate(self) -> bool:
     frame = self.inspect.currentframe()
