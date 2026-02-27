@@ -9,6 +9,7 @@ class __getattr__:
   import_module = staticmethod(import_module)
 
   class _str(str):
+    import sys
     from typing import Union
 
     def __getattr__(self, attr: str):
@@ -19,6 +20,12 @@ class __getattr__:
 
     def __ror__(self, other):
       return self.Union[other, self]
+
+    def __enter__(self):
+      self.sys.modules[str(self)[len(__name__) + 1:]] = self  # pyright: ignore
+
+    def __exit__(self, *exc_info):
+      self.sys.modules.pop(str(self)[len(__name__) + 1:])
 
     # class _str
 

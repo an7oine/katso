@@ -8,21 +8,29 @@ from typing import Optional
 
 import katso
 
+with katso.lib:
+  from lib import b
+
+
 @dataclass(kw_only=True)
 class A:
   a: int
-  b: Optional[katso.lib.b.B] = None
+  b: Optional[b.B] = None
 
 
 # lib/b.py
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-import katso
+if TYPE_CHECKING:
+  from lib import a
+else:
+  import katso
+  a = katso.lib.a
 
 @dataclass(kw_only=True)
 class B:
-  a: Optional[katso.lib.a.A] = None
+  a: Optional[a.A] = None
   b: str
 
 
