@@ -10,7 +10,10 @@ class __getattr__:
 
   class _str(str):
     import sys
+    from types import ModuleType
     from typing import Union
+
+    _modules: dict[int, ModuleType] = {}
 
     def __getattr__(self, attr: str):
       return type(self)('.'.join((self, attr)))
@@ -22,10 +25,21 @@ class __getattr__:
       return self.Union[other, self]
 
     def __enter__(self):
-      self.sys.modules[str(self)[len(__name__) + 1:]] = self  # pyright: ignore
+      s = str(self)[len(__name__) + 1:]
+      try:
+        self._modules[id(self)] = self.sys.modules[s]
+      except KeyError:
+        pass
+      self.sys.modules[s] = self  # pyright: ignore
+      # def __enter__
 
     def __exit__(self, *exc_info):
-      self.sys.modules.pop(str(self)[len(__name__) + 1:])
+      s = str(self)[len(__name__) + 1:]
+      try:
+        self.sys.modules[s] = self._modules.pop(id(self))
+      except KeyError:
+        self.sys.modules.pop(s)
+      # def __exit__
 
     # class _str
 

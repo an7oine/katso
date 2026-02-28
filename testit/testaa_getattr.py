@@ -24,21 +24,21 @@ class TestAB:
 
   @dataclass
   class A:
-    b: Optional[katso.test.TestAB.B] = None
+    b: Optional[katso.testit.testaa_getattr.TestAB.B] = None
 
   @dataclass
   class B:
-    a: Optional[katso.test.TestAB.A] = None
+    a: Optional[katso.testit.testaa_getattr.TestAB.A] = None
 
   def test(self):
     assert get_annotations(self.A) == {
-      'b': Optional[ForwardRef('katso.test.TestAB.B')]
+      'b': Optional[ForwardRef('katso.testit.testaa_getattr.TestAB.B')]
     }
     assert get_type_hints(self.A) == {
       'b': Optional[self.B]
     }
     assert get_annotations(self.B) == {
-      'a': Optional[ForwardRef('katso.test.TestAB.A')]
+      'a': Optional[ForwardRef('katso.testit.testaa_getattr.TestAB.A')]
     }
     assert get_type_hints(self.B) == {
       'a': Optional[self.A]
