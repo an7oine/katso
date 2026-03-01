@@ -25,7 +25,7 @@ class Testi:
       from dataclasses import dataclass
       from typing import Optional
       import katso
-      with katso.b:
+      with katso:
         from b import B
       @dataclass
       class A:
@@ -39,7 +39,7 @@ class Testi:
       from dataclasses import dataclass
       from typing import Optional
       import katso
-      with katso.a:
+      with katso:
         from a import A
       @dataclass
       class B:

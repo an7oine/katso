@@ -1,9 +1,12 @@
-# pylint: disable=protected-access
+# pylint: disable=protected-access, invalid-name, redefined-builtin
 @type.__call__
 class __getattr__:
 
+  import builtins
+  import functools
   from importlib import import_module
   import inspect
+  import sys
   from types import ModuleType
 
   import_module = staticmethod(import_module)
@@ -43,6 +46,11 @@ class __getattr__:
 
     # class _str
 
+  def __import__(self, name, *args, __import__, **kwargs):
+    with self._str('.'.join((__name__, name))):
+      return __import__(name, *args, **kwargs)
+    # def __import__
+
   def _forwardref_evaluate(self) -> bool:
     frame = self.inspect.currentframe()
     while frame is not None:
@@ -66,4 +74,33 @@ class __getattr__:
     return self.import_module(attr)
     # def __call__
 
+  def __enter__(self):
+    self.builtins.__import__ = self.functools.wraps(
+      __import__ := self.builtins.__import__
+    )(
+      self.functools.partial(
+        self.__import__,
+        __import__=__import__
+      )
+    )
+    # def __enter__
+
+  def __exit__(self, *exc_info):
+    self.builtins.__import__ = self.builtins.__import__.__wrapped__
+
   # class __getattr__
+
+
+__getattr__.sys.modules[__name__].__class__ = __getattr__.functools.wraps(
+  __getattr__.sys.modules[__name__].__class__,
+  updated=()
+)(type(
+  __getattr__.sys.modules[__name__].__class__.__name__,
+  (
+    __getattr__.sys.modules[__name__].__class__,
+  ),
+  {
+    '__enter__': __getattr__.__enter__,
+    '__exit__': __getattr__.__exit__,
+  }
+))
