@@ -51,14 +51,21 @@ class __getattr__:
       return __import__(name, *args, **kwargs)
     # def __import__
 
+  def _annotate(self) -> bool:
+    # Python 3.14+
+    if frame := self.inspect.currentframe():
+      while (frame := frame.f_back) is not None:
+        if frame.f_code.co_name == '__annotate__':
+          return True
+    return False
+    # def _annotate -> bool
+
   def _forwardref_evaluate(self) -> bool:
+    # Python 3.13-
     frame = self.inspect.currentframe()
     while frame is not None:
       if (f_back := frame.f_back) is not None \
-      and f_back.f_code.co_qualname in (
-        'ForwardRef.evaluate',  # Python 3.14+
-        'ForwardRef._evaluate',  # Python 3.13-
-      ):
+      and f_back.f_code.co_qualname == 'ForwardRef._evaluate':
         return True
       elif frame.f_code.co_qualname == '<module>':
         return False
@@ -66,10 +73,17 @@ class __getattr__:
     return False
     # def _forwardref_evaluate -> bool
 
+  def _defer(self) -> bool:
+    if self.sys.version_info >= (3, 14):
+      return self._annotate()
+    else:
+      return not self._forwardref_evaluate()
+    # def _defer -> bool
+
   def __call__(self, attr: str) -> str | ModuleType:
     if attr.startswith(__name__ + '.'):
       attr = attr[len(__name__) + 1:]
-    if not self._forwardref_evaluate():
+    if self._defer():
       return self._str('.'.join((__name__, attr)))
     return self.import_module(attr)
     # def __call__
