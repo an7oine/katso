@@ -8,17 +8,18 @@ class __getattr__:
   import inspect
   import sys
   from types import ModuleType
+  from typing import Any, Callable
 
   import_module = staticmethod(import_module)
 
   class _str(str):
     import sys
     from types import ModuleType
-    from typing import Union
+    from typing import Any, Self, Union
 
     _modules: dict[int, ModuleType] = {}
 
-    def __getattr__(self, attr: str):
+    def __getattr__(self, attr: str) -> Any:
       return type(self)('.'.join((self, attr)))
 
     def __or__(self, other):
@@ -27,7 +28,7 @@ class __getattr__:
     def __ror__(self, other):
       return self.Union[other, self]
 
-    def __enter__(self):
+    def __enter__(self) -> None:
       s = str(self)[len(__name__) + 1:]
       try:
         self._modules[id(self)] = self.sys.modules[s]
@@ -36,7 +37,7 @@ class __getattr__:
       self.sys.modules[s] = self  # pyright: ignore
       # def __enter__
 
-    def __exit__(self, *exc_info):
+    def __exit__(self, *exc_info: Any) -> None:
       s = str(self)[len(__name__) + 1:]
       try:
         self.sys.modules[s] = self._modules.pop(id(self))
@@ -46,7 +47,13 @@ class __getattr__:
 
     # class _str
 
-  def __import__(self, name, *args, __import__, **kwargs):
+  def __import__(
+    self,
+    name: str,
+    *args: Any,
+    __import__: Callable[..., ModuleType],
+    **kwargs: Any,
+  ) -> ModuleType:
     with self._str('.'.join((__name__, name))):
       return __import__(name, *args, **kwargs)
     # def __import__
@@ -88,7 +95,7 @@ class __getattr__:
     return self.import_module(attr)
     # def __call__
 
-  def __enter__(self):
+  def __enter__(self) -> None:
     self.builtins.__import__ = self.functools.wraps(
       __import__ := self.builtins.__import__
     )(
@@ -99,7 +106,7 @@ class __getattr__:
     )
     # def __enter__
 
-  def __exit__(self, *exc_info):
+  def __exit__(self, *exc_info: Any) -> None:
     self.builtins.__import__ = self.builtins.__import__.__wrapped__
 
   # class __getattr__
