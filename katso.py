@@ -4,13 +4,26 @@ class __getattr__:
 
   import builtins
   import functools
-  from importlib import import_module
+  import importlib
   import inspect
   import sys
   from types import ModuleType
   from typing import Any, Callable
 
-  import_module = staticmethod(import_module)
+  def import_string(self, name: str) -> ModuleType | Any:
+    try:
+      return self.importlib.import_module(name)
+    except ModuleNotFoundError as exc:
+      try:
+        module_path, class_name = name.rsplit('.', 1)
+      except ValueError:
+        raise exc from None
+      else:
+        return getattr(
+          self.import_string(module_path),
+          class_name,
+        )
+    # def import_string
 
   class _str(str):
     import sys
@@ -92,7 +105,7 @@ class __getattr__:
       attr = attr[len(__name__) + 1:]
     if self._defer():
       return self._str('.'.join((__name__, attr)))
-    return self.import_module(attr)
+    return self.import_string(attr)
     # def __call__
 
   def __enter__(self) -> None:
