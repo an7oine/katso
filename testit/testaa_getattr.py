@@ -31,15 +31,25 @@ class TestAB:
     a: Optional[katso.testit.testaa_getattr.TestAB.A] = None
 
   def test(self):
-    assert get_annotations(self.A) == {
-      'b': Optional[ForwardRef('katso.testit.testaa_getattr.TestAB.B')]
-    }
+    if sys.version_info >= (3, 14):
+      assert get_annotations(self.A) == {
+        'b': Optional[self.B]
+      }
+    else:
+      assert get_annotations(self.A) == {
+        'b': Optional[ForwardRef('katso.testit.testaa_getattr.TestAB.B')]
+      }
     assert get_type_hints(self.A) == {
       'b': Optional[self.B]
     }
-    assert get_annotations(self.B) == {
-      'a': Optional[ForwardRef('katso.testit.testaa_getattr.TestAB.A')]
-    }
+    if sys.version_info >= (3, 14):
+      assert get_annotations(self.B) == {
+        'a': Optional[self.A]
+      }
+    else:
+      assert get_annotations(self.B) == {
+        'a': Optional[ForwardRef('katso.testit.testaa_getattr.TestAB.A')]
+      }
     assert get_type_hints(self.B) == {
       'a': Optional[self.A]
     }

@@ -10,6 +10,8 @@ class __getattr__:
   from types import ModuleType
   from typing import Any, Callable
 
+  _within: bool = False
+
   def import_string(self, name: str) -> ModuleType | Any:
     try:
       return self.importlib.import_module(name)
@@ -33,7 +35,8 @@ class __getattr__:
     _modules: dict[int, ModuleType] = {}
 
     def __getattr__(self, attr: str) -> Any:
-      return type(self)('.'.join((self, attr)))
+      global __getattr__
+      return __getattr__('.'.join((self, attr)))
 
     def __or__(self, other):
       return self.Union[self, other]
@@ -71,44 +74,36 @@ class __getattr__:
       return __import__(name, *args, **kwargs)
     # def __import__
 
-  def _annotate(self) -> bool:
-    # Python 3.14+
+  def _defer(self) -> bool:
     if frame := self.inspect.currentframe():
       while (frame := frame.f_back) is not None:
-        if frame.f_code.co_name == '__annotate__':
+        if not __name__ in frame.f_globals:
+          continue
+        if (f_back := frame.f_back) is not None \
+        and f_back.f_code.co_qualname in (
+          'ForwardRef._evaluate',  # Python 3.11–3.13
+          'ForwardRef.evaluate',   # Python 3.14+
+        ):
+          return False
+        if '<locals>' in frame.f_locals.get('__qualname__', ''):
+          return False
+        if '__module__' in frame.f_locals \
+        or '__name__' in frame.f_locals:
           return True
-    return False
-    # def _annotate -> bool
-
-  def _forwardref_evaluate(self) -> bool:
-    # Python 3.13-
-    frame = self.inspect.currentframe()
-    while frame is not None:
-      if (f_back := frame.f_back) is not None \
-      and f_back.f_code.co_qualname == 'ForwardRef._evaluate':
-        return True
-      elif frame.f_code.co_qualname == '<module>':
         return False
-      frame = f_back
     return False
-    # def _forwardref_evaluate -> bool
-
-  def _defer(self) -> bool:
-    if self.sys.version_info >= (3, 14):
-      return self._annotate()
-    else:
-      return not self._forwardref_evaluate()
     # def _defer -> bool
 
   def __call__(self, attr: str) -> str | ModuleType:
     if attr.startswith(__name__ + '.'):
       attr = attr[len(__name__) + 1:]
-    if self._defer():
+    if self._within or self._defer():
       return self._str('.'.join((__name__, attr)))
     return self.import_string(attr)
     # def __call__
 
   def __enter__(self) -> None:
+    self._within = True
     self.builtins.__import__ = self.functools.wraps(
       __import__ := self.builtins.__import__
     )(
@@ -121,6 +116,8 @@ class __getattr__:
 
   def __exit__(self, *exc_info: Any) -> None:
     self.builtins.__import__ = self.builtins.__import__.__wrapped__
+    self._within = False
+    # def __exit__
 
   # class __getattr__
 
