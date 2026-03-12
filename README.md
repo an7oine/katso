@@ -2,51 +2,51 @@ katso
 =====
 
 ```python
-# lib/a.py
+# lib/am.py
+
 from dataclasses import dataclass
 from typing import Optional
 
 import katso
 
-
-with katso.lib:
-  from lib import b
+with katso:
+  from lib import bm
 
 
 @dataclass(kw_only=True)
 class A:
   a: int
-  b: Optional[b.B] = None
+  b: Optional[bm.B] = None
 
 
-# lib/b.py
+# lib/bm.py
+
 from dataclasses import dataclass
-from typing import Optional, TYPE_CHECKING
-
-if TYPE_CHECKING:
-  from lib import a
-else:
-  import katso
-  a = katso.lib.a
-
-@dataclass(kw_only=True)
-class B:
-  a: Optional[a.A] = None
-  b: str
-
-
-# bin/c.py
-from dataclasses import dataclass
+from typing import Optional
 
 import katso
 
-def f(a: katso.lib.a.A, b: katso.lib.b.B) -> katso.bin.c.C:
-  return C(a, b)
+with katso:
+  from lib import am
+
+
+@dataclass(kw_only=True)
+class B:
+  a: Optional[am.A] = None
+  b: str
+
+
+# bin/cm.py
+
+from dataclasses import dataclass
+
+from lib import am, bm
+
 
 @dataclass
 class C:
-  a: katso.lib.a.A
-  b: katso.lib.b.B
+  a: am.A
+  b: bm.B
 
   def __post_init__(self):
     self.a.b = self.b
@@ -56,8 +56,6 @@ class C:
   # class C
 
 
-from lib.a import A
-from lib.B import B
-c = f(A(a=42), B(b=57))
-print(c)  # C(a=A(a=42, b=B(a=..., b=57)), b=B(a=A(a=42, b=...), b=57))
+c = C(am.A(a=42), bm.B(b='spam'))
+assert str(c) == "C(a=A(a=42, b=B(a=..., b='spam')), b=B(a=A(a=42, b=...), b='spam'))"
 ```
