@@ -10,7 +10,7 @@ class __getattr__:
   from types import ModuleType
   from typing import Any, Callable
 
-  _within: bool = False
+  _within: int = 0
 
   def import_string(self, name: str) -> ModuleType | Any:
     try:
@@ -103,7 +103,7 @@ class __getattr__:
     # def __call__
 
   def __enter__(self) -> None:
-    self._within = True
+    self._within += 1
     self.builtins.__import__ = self.functools.wraps(
       __import__ := self.builtins.__import__
     )(
@@ -116,7 +116,7 @@ class __getattr__:
 
   def __exit__(self, *exc_info: Any) -> None:
     self.builtins.__import__ = self.builtins.__import__.__wrapped__
-    self._within = False
+    self._within -= 1
     # def __exit__
 
   # class __getattr__
