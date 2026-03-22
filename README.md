@@ -10,13 +10,20 @@ from typing import Optional
 import katso
 
 with katso:
-  from lib import bm
+  from lib import am, bm
+assert isinstance(bm.B, str)
 
 
 @dataclass(kw_only=True)
 class A:
   a: int
   b: Optional[bm.B] = None
+
+  @property
+  def _b(self: am.A) -> bm.B:
+    assert isinstance(self, am.A)
+    assert isinstance(bm.B, type)
+    return bm.B(a=self, b=str(self.a))
 
 
 # lib/bm.py
@@ -58,4 +65,6 @@ class C:
 
 c = C(am.A(a=42), bm.B(b='spam'))
 assert str(c) == "C(a=A(a=42, b=B(a=..., b='spam')), b=B(a=A(a=42, b=...), b='spam'))"
-```
+
+assert isinstance(am.A(a=42)._b, bm.B)
+assert str(am.A(a=42)._b) == "B(a=A(a=42, b=None), b='42')"
