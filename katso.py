@@ -78,20 +78,19 @@ class __getattr__:
     if frame := self.inspect.currentframe():
       while (frame := frame.f_back) is not None:
         if not __name__ in frame.f_globals:
+          if __name__ in frame.f_locals:
+            return False  # Python 3.11–3.13
           continue
-        if (f_back := frame.f_back) is not None \
-        and f_back.f_code.co_qualname in (
-          'ForwardRef._evaluate',  # Python 3.11–3.13
-          'ForwardRef.evaluate',   # Python 3.14+
-        ):
-          return False
-        if '<locals>' in frame.f_locals.get('__qualname__', ''):
-          return False
-        if '__module__' in frame.f_locals \
+        elif (f_back := frame.f_back) is not None \
+        and f_back.f_code.co_qualname == 'ForwardRef.evaluate':
+          return False  # Python 3.14+
+        elif '<locals>' in frame.f_locals.get('__qualname__', ''):
+          return False  # Python 3.11–3.13
+        elif '__module__' in frame.f_locals \
         or '__name__' in frame.f_locals:
-          return True
+          return True  # Python 3.11–3.13
         return False
-    return False
+    return True
     # def _defer -> bool
 
   def __call__(self, attr: str) -> str | ModuleType:
