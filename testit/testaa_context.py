@@ -14,11 +14,12 @@ class Testi(Testi):
   def a(self):
     return self.import_string('a', '''
       from dataclasses import dataclass
-      import sys
       from typing import Optional, Self
       import katso
+
       with katso:
         import b as bm
+
       @dataclass
       class A:
         b: Optional[bm.B] = None
@@ -32,11 +33,12 @@ class Testi(Testi):
   def b(self):
     return self.import_string('b', '''
       from dataclasses import dataclass
-      import sys
       from typing import Optional, Self
       import katso
+
       with katso:
         import a as am
+
       @dataclass
       class B:
         a: Optional[am.A] = None

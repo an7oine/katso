@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import importlib
 from inspect import get_annotations
 import sys
 from types import ModuleType
@@ -9,18 +8,10 @@ import pytest
 
 import katso
 
-
-def import_string(name: str, source: str):
-  spec = importlib.util.spec_from_loader(name, loader=None)
-  module = importlib.util.module_from_spec(spec)
-  exec(source, module.__dict__)
-  sys.modules[name] = module
-  globals()[name] = module
-  return module
-  # def import_string
+from ._testi import Testi
 
 
-class TestAB:
+class TestAB(Testi):
 
   @dataclass
   class A:
@@ -56,16 +47,23 @@ class TestAB:
     a = self.A(b=self.B())
     a.b.a = a
     assert repr(a) == 'TestAB.A(b=TestAB.B(a=...))'
+
+    try:
+      from katso import mod
+    except ImportError:
+      pass
+    else:
+      assert False
     # def new
 
   # class TestAB
 
 
-class TestCD:
+class TestCD(Testi):
 
   @pytest.fixture
   def c(self):
-    return import_string('c', '''
+    return self.import_string('c', '''
       from dataclasses import dataclass
       from typing import Optional
       import katso
@@ -76,7 +74,7 @@ class TestCD:
 
   @pytest.fixture
   def d(self):
-    return import_string('d', '''
+    return self.import_string('d', '''
       from dataclasses import dataclass
       from typing import Optional
       import katso
