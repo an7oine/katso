@@ -95,6 +95,8 @@ class __getattr__:
     # def _defer -> bool
 
   def __call__(self, attr: str) -> str | ModuleType:
+    if attr == '__path__':
+      raise AttributeError(repr(attr))
     if attr.startswith(__name__ + '.'):
       attr = attr[len(__name__) + 1:]
     if self._within or self._defer():
