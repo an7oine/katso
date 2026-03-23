@@ -8,7 +8,7 @@ class __getattr__:
   import inspect
   import sys
   from types import ModuleType
-  from typing import Any, Callable
+  from typing import Any, Callable, Never
 
   _within: int = 0
 
@@ -120,6 +120,9 @@ class __getattr__:
     self._within -= 1
     # def __exit__
 
+  def __mod_setattr__(self, attr: str, val: Any) -> Never:
+    raise AttributeError('.'.join((self, attr)))
+
   # class __getattr__
 
 
@@ -134,5 +137,6 @@ __getattr__.sys.modules[__name__].__class__ = __getattr__.functools.wraps(
   {
     '__enter__': __getattr__.__enter__,
     '__exit__': __getattr__.__exit__,
+    '__setattr__': __getattr__.__mod_setattr__,
   }
 ))
